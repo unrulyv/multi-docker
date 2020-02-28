@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t unrulyv/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true unrulyv/react-test npm test
+
+after_success:
+  - docker build -t unrulyv/multi-client ./client
+  - docker build -t unrulyv/multi-nginx ./nginx
+  - docker build -t unrulyv/multi-server ./server
+  - docker build -t unrulyv/multi-worker ./worker
+  # login to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take those images and push them to dockerhub
+  - docker push unrulyv/multi-client
+  - docker push unrulyv/multi-nginx
+  - docker push unrulyv/multi-server
+  - docker push unrulyv/multi-worker
